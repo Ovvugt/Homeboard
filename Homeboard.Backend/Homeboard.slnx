@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/0. Solution Items/">
+    <File Path=".editorconfig"/>
+    <File Path="Directory.Build.props"/>
+    <File Path="Directory.Packages.props"/>
+  </Folder>
+  <Folder Name="/1. Core/">
+    <Project Path="Homeboard.Core/Homeboard.Core.csproj"/>
+  </Folder>
+  <Folder Name="/2. Features/">
+    <Project Path="Homeboard.Boards/Homeboard.Boards.csproj"/>
+    <Project Path="Homeboard.Status/Homeboard.Status.csproj"/>
+    <Project Path="Homeboard.Widgets/Homeboard.Widgets.csproj"/>
+    <Project Path="Homeboard.Icons/Homeboard.Icons.csproj"/>
+  </Folder>
+  <Folder Name="/3. API/">
+    <Project Path="Homeboard.API/Homeboard.API.csproj"/>
+  </Folder>
+  <Folder Name="/4. Hosts/">
+    <Project Path="Homeboard.AppHost/Homeboard.AppHost.csproj"/>
+  </Folder>
+  <Folder Name="/5. Tests/">
+    <Project Path="Homeboard.API.Tests/Homeboard.API.Tests.csproj"/>
+    <Project Path="Homeboard.Boards.Tests/Homeboard.Boards.Tests.csproj"/>
+  </Folder>
+</Solution>

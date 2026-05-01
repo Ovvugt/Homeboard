@@ -1,0 +1,39 @@
+# Build output
+**/bin/
+**/obj/
+**/dist/
+**/node_modules/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.DotSettings.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local data / secrets
+.env
+.env.local
+*.local
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vite
+.vite/
+
+# Logs
+*.log
+Logs/
+
+# Misc
+.aspire/

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>homeboard-api-bd9f4e5f-9d8e-4f9b-aef5-7c3eaab3c1ef</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Homeboard.API.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DotNetEnv" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Settings.Configuration" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Homeboard.Core\Homeboard.Core.csproj" />
+    <ProjectReference Include="..\Homeboard.Boards\Homeboard.Boards.csproj" />
+    <ProjectReference Include="..\Homeboard.Status\Homeboard.Status.csproj" />
+    <ProjectReference Include="..\Homeboard.Widgets\Homeboard.Widgets.csproj" />
+    <ProjectReference Include="..\Homeboard.Icons\Homeboard.Icons.csproj" />
+  </ItemGroup>
+</Project>

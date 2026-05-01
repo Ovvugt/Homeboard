@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Sdk Name="Aspire.AppHost.Sdk" Version="13.0.0" />
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <UserSecretsId>homeboard-apphost-1c2e9874-1f48-4b21-b6ad-49118e6a1ab1</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Aspire.Hosting.AppHost" />
+        <PackageReference Include="Aspire.Hosting.JavaScript" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Homeboard.API\Homeboard.API.csproj" />
+    </ItemGroup>
+
+</Project>

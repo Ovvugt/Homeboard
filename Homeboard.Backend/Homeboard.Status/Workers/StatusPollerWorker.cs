@@ -27,11 +27,13 @@ public sealed class StatusPollerWorker(
         }
         catch (OperationCanceledException) { return; }
 
+        var firstCycle = true;
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await PollOnceAsync(stoppingToken);
+                await PollOnceAsync(forceAll: firstCycle, stoppingToken);
+                firstCycle = false;
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { return; }
             catch (Exception ex)
@@ -47,7 +49,7 @@ public sealed class StatusPollerWorker(
         }
     }
 
-    private async Task PollOnceAsync(CancellationToken ct)
+    private async Task PollOnceAsync(bool forceAll, CancellationToken ct)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var tiles = scope.ServiceProvider.GetRequiredService<ITileRepository>();
@@ -62,6 +64,7 @@ public sealed class StatusPollerWorker(
 
         var due = allTiles.Where(t =>
         {
+            if (forceAll) return true;
             if (!snapshots.TryGetValue(t.Id, out var snap)) return true;
             return snap.LastCheckedUtc.AddSeconds(t.StatusInterval) <= now;
         }).ToList();

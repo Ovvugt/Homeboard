@@ -2,6 +2,7 @@ using Homeboard.Icons.Repositories;
 using Homeboard.Icons.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Net.Http;
 
 namespace Homeboard.Icons;
 
@@ -13,6 +14,10 @@ public static class DependencyInjection
         {
             c.DefaultRequestHeaders.Add("User-Agent", "Homeboard/0.1 (icon fetch; +https://homeboard.local)");
             c.DefaultRequestHeaders.Add("Accept", "image/*,text/html;q=0.9,*/*;q=0.5");
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
         });
         services.AddScoped<IIconRepository, IconRepository>();
         services.AddScoped<IIconFetcher, IconFetcher>();

@@ -47,6 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Lowercase repository owner
+        id: owner
+        run: echo "value=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -60,8 +63,8 @@ jobs:
           file: Dockerfile
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/homeboard:latest
-            ghcr.io/${{ github.repository_owner }}/homeboard:sha-${{ github.sha }}
+            ghcr.io/${{ steps.owner.outputs.value }}/homeboard:latest
+            ghcr.io/${{ steps.owner.outputs.value }}/homeboard:sha-${{ github.sha }}
           build-args: |
             VERSION=${{ needs.version.outputs.version || '0.0.0-dev' }}
           cache-from: type=gha,scope=homeboard

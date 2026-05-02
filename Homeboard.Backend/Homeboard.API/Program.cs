@@ -40,8 +40,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();
 

@@ -1,0 +1,12 @@
+**/bin
+**/obj
+**/node_modules
+**/dist
+Homeboard.Frontend/dist
+Homeboard.Backend/Homeboard.API/wwwroot
+.git
+.github
+.idea
+.vs
+.vscode
+*.md

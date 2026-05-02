@@ -1,0 +1,11 @@
+services:
+  homeboard:
+    image: ghcr.io/${GHCR_OWNER:-ovvugt}/homeboard:${IMAGE_TAG:-latest}
+    ports:
+      - "80:8080"
+    volumes:
+      - homeboard-data:/data
+    restart: unless-stopped
+
+volumes:
+  homeboard-data:

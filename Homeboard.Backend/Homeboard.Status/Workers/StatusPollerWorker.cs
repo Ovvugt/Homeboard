@@ -28,12 +28,20 @@ public sealed class StatusPollerWorker(
         catch (OperationCanceledException) { return; }
 
         var firstCycle = true;
+        var cyclesSincePrune = 0;
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 await PollOnceAsync(forceAll: firstCycle, stoppingToken);
                 firstCycle = false;
+
+                // Prune history older than 24h, every ~6 minutes (assuming default 10s poll interval).
+                if (++cyclesSincePrune >= 36)
+                {
+                    cyclesSincePrune = 0;
+                    await PruneHistoryAsync(stoppingToken);
+                }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { return; }
             catch (Exception ex)
@@ -81,6 +89,7 @@ public sealed class StatusPollerWorker(
                 snapshots.TryGetValue(tile.Id, out var prev);
                 var snap = await checker.CheckAsync(tile, prev, ct);
                 await statusRepo.UpsertAsync(snap, ct);
+                await statusRepo.AppendHistoryAsync(snap.TileId, snap.LastCheckedUtc, snap.Status, snap.ResponseTimeMs, ct);
             }
             finally
             {
@@ -88,5 +97,19 @@ public sealed class StatusPollerWorker(
             }
         });
         await Task.WhenAll(tasks);
+    }
+
+    private async Task PruneHistoryAsync(CancellationToken ct)
+    {
+        try
+        {
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var repo = scope.ServiceProvider.GetRequiredService<IStatusRepository>();
+            await repo.PruneHistoryOlderThanAsync(DateTime.UtcNow.AddHours(-24), ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Status history prune failed");
+        }
     }
 }

@@ -41,7 +41,9 @@ function blank(): FormState {
     iconKind: 'Url',
     description: '',
     color: '',
-    statusType: 'None',
+    // Default to HTTP GET against the tile URL — most users want the dot.
+    // Advanced users can switch the type or set a separate target.
+    statusType: 'HttpGet',
     statusTarget: '',
     statusInterval: 60,
     statusTimeout: 5000,
@@ -72,6 +74,9 @@ watch(() => [props.open, props.tile], ([open]) => {
 async function save() {
   submitting.value = true
   submitting.error = ''
+  // Clamp to backend-enforced bounds — poller cadence floor is 10s.
+  form.statusInterval = Math.max(10, Math.min(86400, Number(form.statusInterval) || 60))
+  form.statusTimeout = Math.max(100, Math.min(60000, Number(form.statusTimeout) || 5000))
   try {
     if (props.tile) {
       const dto: UpdateTileDto = {
@@ -176,12 +181,12 @@ const inputClass = 'mt-1 block w-full rounded-md border border-gray-300 dark:bor
           </select>
         </Field>
         <template v-if="form.statusType !== 'None'">
-          <Field label="Target" hint="HTTP: full URL. TCP: host:port">
+          <Field label="Target (optional)" hint="Leave blank to check the tile's URL. HTTP: full URL. TCP: host:port.">
             <input v-model="form.statusTarget" :class="inputClass" />
           </Field>
           <div class="grid grid-cols-2 gap-3">
-            <Field label="Interval (s)">
-              <input v-model.number="form.statusInterval" type="number" min="5" max="86400" :class="inputClass" />
+            <Field label="Interval (s)" hint="Minimum 10s — the poller wakes every 10s.">
+              <input v-model.number="form.statusInterval" type="number" min="10" max="86400" :class="inputClass" />
             </Field>
             <Field label="Timeout (ms)">
               <input v-model.number="form.statusTimeout" type="number" min="100" max="60000" :class="inputClass" />

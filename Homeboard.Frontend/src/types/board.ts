@@ -119,3 +119,10 @@ export interface TileStatusSnapshot {
   responseTimeMs: number | null
   note: string | null
 }
+
+export interface TileStatusHistoryPoint {
+  tileId: string
+  checkedUtc: string
+  status: StatusValue
+  responseTimeMs: number | null
+}

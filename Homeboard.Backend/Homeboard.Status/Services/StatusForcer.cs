@@ -21,6 +21,7 @@ public sealed class StatusForcer(
         var previous = await repo.GetAsync(tileId, ct);
         var snapshot = await checker.CheckAsync(tile, previous, ct);
         await repo.UpsertAsync(snapshot, ct);
+        await repo.AppendHistoryAsync(snapshot.TileId, snapshot.LastCheckedUtc, snapshot.Status, snapshot.ResponseTimeMs, ct);
         return snapshot;
     }
 }

@@ -12,3 +12,9 @@ public sealed record TileStatusSnapshot
     public int? ResponseTimeMs { get; init; }
     public string? Note { get; init; }
 }
+
+public sealed record TileStatusHistoryPoint(
+    Guid TileId,
+    DateTime CheckedUtc,
+    StatusValue Status,
+    int? ResponseTimeMs);

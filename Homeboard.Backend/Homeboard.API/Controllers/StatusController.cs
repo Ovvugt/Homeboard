@@ -12,6 +12,13 @@ public sealed class StatusController(IStatusReader reader, IStatusForcer forcer)
     public Task<IReadOnlyList<TileStatusSnapshot>> ListByBoard([FromQuery] Guid boardId, CancellationToken ct)
         => reader.GetByBoardAsync(boardId, ct);
 
+    [HttpGet("history")]
+    public Task<IReadOnlyList<TileStatusHistoryPoint>> ListHistoryByBoard(
+        [FromQuery] Guid boardId,
+        [FromQuery] int max = 240,
+        CancellationToken ct = default)
+        => reader.GetHistoryByBoardAsync(boardId, max, ct);
+
     [HttpPost("{tileId:guid}/check")]
     public async Task<ActionResult<TileStatusSnapshot>> CheckNow(Guid tileId, CancellationToken ct)
     {

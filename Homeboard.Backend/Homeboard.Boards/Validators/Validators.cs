@@ -34,7 +34,7 @@ public sealed class CreateTileDtoValidator : AbstractValidator<CreateTileDto>
         RuleFor(x => x.GridY).GreaterThanOrEqualTo(0);
         RuleFor(x => x.GridW).InclusiveBetween(1, 24);
         RuleFor(x => x.GridH).InclusiveBetween(1, 24);
-        RuleFor(x => x.StatusInterval).InclusiveBetween(5, 86400).When(x => x.StatusInterval.HasValue);
+        RuleFor(x => x.StatusInterval).InclusiveBetween(10, 86400).When(x => x.StatusInterval.HasValue);
         RuleFor(x => x.StatusTimeout).InclusiveBetween(100, 60000).When(x => x.StatusTimeout.HasValue);
     }
 }
@@ -45,7 +45,7 @@ public sealed class UpdateTileDtoValidator : AbstractValidator<UpdateTileDto>
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(120);
         RuleFor(x => x.Url).NotEmpty().MaximumLength(2048);
-        RuleFor(x => x.StatusInterval).InclusiveBetween(5, 86400);
+        RuleFor(x => x.StatusInterval).InclusiveBetween(10, 86400);
         RuleFor(x => x.StatusTimeout).InclusiveBetween(100, 60000);
     }
 }

@@ -123,12 +123,18 @@ async function refresh() {
         :open="tileEditorOpen"
         :board-id="boards.current.id"
         :tile="editingTile"
+        :existing-tiles="boards.current.tiles"
+        :existing-widgets="boards.current.widgets"
+        :grid-columns="boards.current.gridColumns"
         @close="tileEditorOpen = false"
         @saved="refresh"
       />
       <WidgetPicker
         :open="widgetPickerOpen"
         :board-id="boards.current.id"
+        :existing-tiles="boards.current.tiles"
+        :existing-widgets="boards.current.widgets"
+        :grid-columns="boards.current.gridColumns"
         @close="widgetPickerOpen = false"
         @saved="refresh"
       />

@@ -1,22 +1,37 @@
 <script setup lang="ts">
 import Modal from '@/components/ui/Modal.vue'
 import { widgetsApi } from '@/api/widgets'
-import type { WidgetType } from '@/types/board'
+import type { TileDto, WidgetDto, WidgetType } from '@/types/board'
+import { findFreeSpot, type GridRect } from '@/utils/placement'
 
-const props = defineProps<{ open: boolean; boardId: string }>()
+const props = defineProps<{
+  open: boolean
+  boardId: string
+  existingTiles?: TileDto[]
+  existingWidgets?: WidgetDto[]
+  gridColumns?: number
+}>()
 const emit = defineEmits<{ close: []; saved: [] }>()
 
 async function pick(type: WidgetType) {
   const config = type === 'Clock'
     ? '{"format":"24h"}'
     : '{"latitude":52.37,"longitude":4.9,"label":"Amsterdam","units":"metric"}'
+  const w = 3
+  const h = 2
+  const columns = props.gridColumns ?? 12
+  const occupants: GridRect[] = [
+    ...(props.existingTiles ?? []),
+    ...(props.existingWidgets ?? []),
+  ]
+  const { x, y } = findFreeSpot(occupants, columns, w, h)
   await widgetsApi.create({
     boardId: props.boardId,
     type,
-    gridX: 0,
-    gridY: 0,
-    gridW: type === 'Clock' ? 3 : 4,
-    gridH: 2,
+    gridX: x,
+    gridY: y,
+    gridW: w,
+    gridH: h,
     configJson: config,
   })
   emit('saved')

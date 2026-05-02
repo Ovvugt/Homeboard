@@ -3,12 +3,16 @@ import { reactive, watch } from 'vue'
 import Modal from '@/components/ui/Modal.vue'
 import Field from '@/components/ui/Field.vue'
 import { tilesApi } from '@/api/tiles'
-import type { CreateTileDto, TileDto, TileIconKind, TileStatusType, UpdateTileDto } from '@/types/board'
+import type { CreateTileDto, TileDto, TileIconKind, TileStatusType, UpdateTileDto, WidgetDto } from '@/types/board'
+import { findFreeSpot, type GridRect } from '@/utils/placement'
 
 const props = defineProps<{
   open: boolean
   boardId: string
   tile: TileDto | null
+  existingTiles?: TileDto[]
+  existingWidgets?: WidgetDto[]
+  gridColumns?: number
 }>()
 
 const emit = defineEmits<{
@@ -85,6 +89,14 @@ async function save() {
       }
       await tilesApi.update(props.tile.id, dto)
     } else {
+      const w = 3
+      const h = 2
+      const columns = props.gridColumns ?? 12
+      const occupants: GridRect[] = [
+        ...(props.existingTiles ?? []),
+        ...(props.existingWidgets ?? []),
+      ]
+      const { x, y } = findFreeSpot(occupants, columns, w, h)
       const dto: CreateTileDto = {
         boardId: props.boardId,
         name: form.name,
@@ -93,10 +105,10 @@ async function save() {
         iconKind: form.iconKind,
         description: form.description || null,
         color: form.color || null,
-        gridX: 0,
-        gridY: 0,
-        gridW: 3,
-        gridH: 2,
+        gridX: x,
+        gridY: y,
+        gridW: w,
+        gridH: h,
         statusType: form.statusType,
         statusTarget: form.statusTarget || null,
         statusInterval: form.statusInterval,

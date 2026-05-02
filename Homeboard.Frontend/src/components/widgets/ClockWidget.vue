@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import type { WidgetDto } from '@/types/board'
+import { useNow } from '@/composables/useNow'
 
 const props = defineProps<{ widget: WidgetDto }>()
 
@@ -14,11 +15,7 @@ const config = computed<ClockConfig>(() => {
   try { return JSON.parse(props.widget.configJson) as ClockConfig } catch { return {} }
 })
 
-const now = ref(new Date())
-let timer: ReturnType<typeof setInterval> | null = null
-
-onMounted(() => { timer = setInterval(() => { now.value = new Date() }, 1000) })
-onBeforeUnmount(() => { if (timer) clearInterval(timer) })
+const now = useNow()
 
 const time = computed(() => {
   const opts: Intl.DateTimeFormatOptions = {

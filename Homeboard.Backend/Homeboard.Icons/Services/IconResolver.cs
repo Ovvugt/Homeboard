@@ -6,7 +6,7 @@ namespace Homeboard.Icons.Services;
 public interface IIconResolver
 {
     Task<IconCacheEntry?> GetForUrlAsync(string url, CancellationToken ct);
-    bool TryGetHost(string url, out string host);
+    bool TryGetOrigin(string url, out string origin);
 }
 
 public sealed class IconResolver(
@@ -17,24 +17,28 @@ public sealed class IconResolver(
     private static readonly TimeSpan FreshFor = TimeSpan.FromDays(30);
     private static readonly TimeSpan FailureCooldown = TimeSpan.FromHours(6);
 
-    public bool TryGetHost(string url, out string host)
+    public bool TryGetOrigin(string url, out string origin)
     {
-        host = "";
+        origin = "";
         if (string.IsNullOrWhiteSpace(url)) return false;
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) return false;
-        var h = uri.Host.ToLowerInvariant();
-        if (h.StartsWith("www.")) h = h[4..];
-        host = h;
-        return host.Length > 0;
+
+        var host = uri.Host.ToLowerInvariant();
+        if (host.Length == 0) return false;
+        if (host.StartsWith("www.")) host = host[4..];
+
+        var builder = new UriBuilder(uri.Scheme, host) { Port = uri.IsDefaultPort ? -1 : uri.Port };
+        origin = builder.Uri.GetLeftPart(UriPartial.Authority).ToLowerInvariant();
+        return true;
     }
 
     public async Task<IconCacheEntry?> GetForUrlAsync(string url, CancellationToken ct)
     {
-        if (!TryGetHost(url, out var host)) return null;
+        if (!TryGetOrigin(url, out var origin)) return null;
 
         var now = time.GetUtcNow().UtcDateTime;
-        var cached = await repo.GetAsync(host, ct);
+        var cached = await repo.GetAsync(origin, ct);
 
         if (cached is not null)
         {
@@ -49,12 +53,13 @@ public sealed class IconResolver(
             }
         }
 
-        var fetched = await fetcher.FetchAsync(host, ct);
+        // Fetch from the user's full URL (path included) so apps that 401/403 at the root still resolve.
+        var fetched = await fetcher.FetchAsync(url, ct);
         if (fetched is null)
         {
             await repo.UpsertAsync(new IconCacheEntry
             {
-                Host = host,
+                Host = origin,
                 ContentType = "",
                 Bytes = [],
                 SourceUrl = "",
@@ -66,7 +71,7 @@ public sealed class IconResolver(
 
         var entry = new IconCacheEntry
         {
-            Host = host,
+            Host = origin,
             ContentType = fetched.ContentType,
             Bytes = fetched.Bytes,
             SourceUrl = fetched.SourceUrl,

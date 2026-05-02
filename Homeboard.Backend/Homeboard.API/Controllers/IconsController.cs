@@ -10,7 +10,7 @@ public sealed class IconsController(IIconResolver resolver) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] string url, CancellationToken ct)
     {
-        if (!resolver.TryGetHost(url, out _))
+        if (!resolver.TryGetOrigin(url, out _))
         {
             return BadRequest(new { error = "Invalid url." });
         }

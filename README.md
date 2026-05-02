@@ -107,4 +107,40 @@ Unit tests for validators / slug normalization plus integration tests through
 | `Weather:CacheMinutes` | `10` | Open-Meteo response cache TTL |
 | `Serilog` | console sink | Logging configuration |
 
-The API binds to `127.0.0.1` only (configured in `launchSettings.json`).
+The API binds to `127.0.0.1` only in development (configured in `launchSettings.json`).
+The Docker image binds to `0.0.0.0:8080`.
+
+## Deploying
+
+Built for a single Linux VM (e.g. a Proxmox guest) on your home network — one
+container, one named volume, no reverse proxy.
+
+### Prerequisites
+
+- Linux host with **Docker** and the **Compose plugin** (`docker compose ...`)
+- Port **80** free on the host
+- A local DNS record (router / Pi-hole / AdGuard) pointing your chosen hostname
+  (e.g. `home.board`) at the VM's IP
+
+### Deploy
+
+```bash
+# on the VM, anywhere you like
+curl -O https://raw.githubusercontent.com/Ovvugt/Homeboard/main/docker-compose.yaml
+docker compose pull
+docker compose up -d
+```
+
+That's it — Homeboard is now reachable at `http://<vm-ip>/` (or your DNS name).
+The SQLite DB lives in the `homeboard-data` Docker volume; back that up if you
+want to keep your boards.
+
+### Updating
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+CI publishes `ghcr.io/ovvugt/homeboard:latest` on every push to `main`. To pin a
+specific release, set `IMAGE_TAG=<version>` in the environment before running
+`docker compose up`.

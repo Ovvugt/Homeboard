@@ -230,7 +230,7 @@ const indentPx = computed(() => Math.min(props.depth, 4) * 16)
             </template>
             <div
               v-if="editable"
-              class="drag-handle absolute inset-0 cursor-move bg-primary-500/0 hover:bg-primary-500/5 rounded-xl ring-2 ring-primary-400/0 hover:ring-primary-400/40 transition pointer-events-auto"
+              class="drag-handle edit-frame absolute inset-0 cursor-move rounded-xl pointer-events-auto"
               @pointerdown="onPointerDown($event, item.i)"
             />
           </div>
@@ -283,4 +283,58 @@ const indentPx = computed(() => Math.min(props.depth, 4) * 16)
 <style scoped>
 .section-block { contain: layout; }
 .add-slot:focus { outline: none; }
+
+/* --- Edit-mode framing for tiles & widgets --- */
+.edit-frame {
+  /* Always-visible dashed border so the whole rectangle reads as editable */
+  border: 1px dashed rgb(148 163 184 / 0.5);
+  transition: background-color 120ms ease, border-color 120ms ease, border-style 120ms ease;
+}
+.edit-frame:hover {
+  background-color: rgb(20 184 166 / 0.06);
+  border-style: solid;
+  border-color: rgb(20 184 166 / 0.7);
+  border-width: 2px;
+}
+
+/* --- Resize affordance: corner bracket that hugs the tile's rounded-xl corner --- */
+:deep(.vgl-item) {
+  --vgl-resizer-size: 28px;
+  --vgl-resizer-border-width: 0px; /* hide library default; we paint our own */
+}
+:deep(.vgl-item__resizer) {
+  /* Bigger hit area, flush bottom-right */
+  width: 28px;
+  height: 28px;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+}
+:deep(.vgl-item__resizer)::before {
+  /* Arc that sits ON the tile's border, matching its rounded-xl (12px) corner */
+  content: '';
+  position: absolute;
+  inset: auto 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-right: 3px solid rgb(20 184 166 / 0.75);
+  border-bottom: 3px solid rgb(20 184 166 / 0.75);
+  border-bottom-right-radius: 12px;
+  transition: border-color 120ms ease, border-width 120ms ease;
+}
+:deep(.vgl-item:hover .vgl-item__resizer)::before {
+  border-right-color: rgb(20 184 166);
+  border-bottom-color: rgb(20 184 166);
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+}
+:deep(.vgl-item__resizer--rtl)::before {
+  inset: auto auto 0 0;
+  border-right: 0;
+  border-left: 3px solid rgb(20 184 166 / 0.75);
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 12px;
+}
+
 </style>

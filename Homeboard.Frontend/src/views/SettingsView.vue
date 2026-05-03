@@ -28,6 +28,11 @@ const themeOptions: { value: ThemePreference; label: string }[] = [
   { value: 'dark', label: 'Dark' },
 ]
 
+const keybinds: { action: string; keys: string[] }[] = [
+  { action: 'Enter edit mode', keys: ['E'] },
+  { action: 'Exit edit mode', keys: ['Esc'] },
+]
+
 const exporting = ref(false)
 const importing = ref(false)
 const message = ref<{ kind: 'info' | 'error' | 'success'; text: string } | null>(null)
@@ -200,6 +205,23 @@ async function confirmSkip() {
           Failed <span class="font-mono">{{ f.slug }}</span>: {{ f.reason }}
         </li>
       </ul>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 mb-3">Keyboard shortcuts</h2>
+      <dl class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+        <div v-for="kb in keybinds" :key="kb.action" class="flex items-center justify-between gap-4 px-4 py-2.5">
+          <dt class="text-gray-700 dark:text-gray-300">{{ kb.action }}</dt>
+          <dd class="flex items-center gap-1">
+            <template v-for="(key, i) in kb.keys" :key="i">
+              <kbd class="inline-flex items-center justify-center min-w-[1.75rem] px-1.5 h-6 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-xs font-mono text-gray-700 dark:text-gray-300 shadow-[0_1px_0_0_rgb(0_0_0/0.05)]">
+                {{ key }}
+              </kbd>
+              <span v-if="i < kb.keys.length - 1" class="text-xs text-gray-400">+</span>
+            </template>
+          </dd>
+        </div>
+      </dl>
     </section>
 
     <section class="mb-8">

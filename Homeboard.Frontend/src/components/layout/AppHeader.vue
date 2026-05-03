@@ -18,6 +18,7 @@ const edit = useEditModeStore()
         :class="edit.editing
           ? 'bg-primary-600 text-white hover:bg-primary-700'
           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'"
+        :title="edit.editing ? 'Exit edit mode (Esc)' : 'Edit mode (E)'"
         @click="edit.toggle()"
       >
         <component :is="edit.editing ? EyeIcon : PencilSquareIcon" class="w-4 h-4" />

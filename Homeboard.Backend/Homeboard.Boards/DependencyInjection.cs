@@ -35,6 +35,9 @@ public static class DependencyInjection
         services.AddScoped<ISectionUpdater, SectionUpdater>();
         services.AddScoped<ISectionDeleter, SectionDeleter>();
 
+        services.AddScoped<IBoardExporter, BoardExporter>();
+        services.AddScoped<IBoardImporter, BoardImporter>();
+
         services.TryAddSingleton(TimeProvider.System);
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 

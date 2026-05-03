@@ -151,7 +151,7 @@ const inputClass = 'mt-1 block w-full rounded-md border border-gray-300 dark:bor
 
 <template>
   <Modal :open="open" :title="tile ? 'Edit tile' : 'Add tile'" @close="emit('close')">
-    <form class="space-y-4" @submit.prevent="save">
+    <form class="space-y-4" @submit.prevent="save" @keydown.ctrl.enter.prevent="save" @keydown.meta.enter.prevent="save">
       <Field label="Name">
         <input v-model="form.name" :class="inputClass" required maxlength="120" />
       </Field>

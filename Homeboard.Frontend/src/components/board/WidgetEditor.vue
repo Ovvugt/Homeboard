@@ -46,6 +46,76 @@ function blank(): FormState {
 const form = reactive<FormState>(blank())
 const submitting = reactive({ value: false, error: '' })
 
+interface TzOption { label: string; value: string; sortKey: number }
+
+// Curated DST-aware IANA zones, one representative per common offset.
+const TZ_REGIONS: { value: string; city: string }[] = [
+  { value: 'Pacific/Midway', city: 'Midway' },
+  { value: 'Pacific/Honolulu', city: 'Honolulu' },
+  { value: 'America/Anchorage', city: 'Anchorage' },
+  { value: 'America/Los_Angeles', city: 'Los Angeles' },
+  { value: 'America/Denver', city: 'Denver' },
+  { value: 'America/Chicago', city: 'Chicago' },
+  { value: 'America/New_York', city: 'New York' },
+  { value: 'America/Halifax', city: 'Halifax' },
+  { value: 'America/Sao_Paulo', city: 'São Paulo' },
+  { value: 'Atlantic/Azores', city: 'Azores' },
+  { value: 'UTC', city: 'UTC' },
+  { value: 'Europe/London', city: 'London' },
+  { value: 'Europe/Paris', city: 'Paris / Amsterdam / Berlin' },
+  { value: 'Europe/Athens', city: 'Athens / Helsinki' },
+  { value: 'Europe/Moscow', city: 'Moscow' },
+  { value: 'Asia/Dubai', city: 'Dubai' },
+  { value: 'Asia/Karachi', city: 'Karachi' },
+  { value: 'Asia/Kolkata', city: 'Kolkata / Mumbai' },
+  { value: 'Asia/Dhaka', city: 'Dhaka' },
+  { value: 'Asia/Bangkok', city: 'Bangkok' },
+  { value: 'Asia/Shanghai', city: 'Shanghai / Singapore' },
+  { value: 'Asia/Tokyo', city: 'Tokyo / Seoul' },
+  { value: 'Australia/Sydney', city: 'Sydney' },
+  { value: 'Pacific/Noumea', city: 'Nouméa' },
+  { value: 'Pacific/Auckland', city: 'Auckland' },
+]
+
+function offsetMinutes(timeZone: string): number {
+  // Compare wall-clock time in the zone vs UTC for a single instant.
+  const now = new Date()
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(now)
+  const get = (t: string) => Number(parts.find(p => p.type === t)?.value)
+  const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour') % 24, get('minute'), get('second'))
+  return Math.round((asUtc - now.getTime()) / 60000)
+}
+
+function formatOffset(min: number): string {
+  const sign = min >= 0 ? '+' : '−' // proper minus sign for visual alignment
+  const abs = Math.abs(min)
+  const h = String(Math.floor(abs / 60)).padStart(2, '0')
+  const m = String(abs % 60).padStart(2, '0')
+  return `UTC ${sign}${h}:${m}`
+}
+
+const timezones = computed<TzOption[]>(() => {
+  const opts = TZ_REGIONS.map(r => {
+    const min = offsetMinutes(r.value)
+    return {
+      value: r.value,
+      sortKey: min,
+      label: `${formatOffset(min)} · ${r.city}`,
+    }
+  })
+  opts.sort((a, b) => a.sortKey - b.sortKey || a.label.localeCompare(b.label))
+  return opts
+})
+
+const browserTimezone = computed(() => {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' } catch { return 'UTC' }
+})
+
 watch(() => [props.open, props.widget?.id, props.widget?.configJson], ([open]) => {
   if (!open || !props.widget) return
   Object.assign(form, blank())
@@ -142,7 +212,7 @@ const inputClass = 'mt-1 block w-full rounded-md border border-gray-300 dark:bor
 
 <template>
   <Modal :open="open" :title="widget ? `Edit ${widget.type} widget` : 'Edit widget'" @close="emit('close')">
-    <form v-if="widget" class="space-y-4" @submit.prevent="save">
+    <form v-if="widget" class="space-y-4" @submit.prevent="save" @keydown.ctrl.enter.prevent="save" @keydown.meta.enter.prevent="save">
       <template v-if="widget.type === 'Clock'">
         <Field label="Format">
           <select v-model="form.format" :class="inputClass">
@@ -150,8 +220,11 @@ const inputClass = 'mt-1 block w-full rounded-md border border-gray-300 dark:bor
             <option value="12h">12-hour</option>
           </select>
         </Field>
-        <Field label="Timezone (optional)" hint="IANA name, e.g. Europe/Amsterdam. Blank = browser local.">
-          <input v-model="form.timezone" :class="inputClass" placeholder="Europe/Amsterdam" />
+        <Field label="Timezone" :hint="`Blank uses browser local (${browserTimezone}). Offsets shown are current; zones observe DST.`">
+          <select v-model="form.timezone" :class="inputClass">
+            <option value="">Browser local</option>
+            <option v-for="tz in timezones" :key="tz.value" :value="tz.value">{{ tz.label }}</option>
+          </select>
         </Field>
         <Field label="Label (optional)">
           <input v-model="form.label" :class="inputClass" />

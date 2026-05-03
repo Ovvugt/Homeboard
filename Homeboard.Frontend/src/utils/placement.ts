@@ -37,3 +37,27 @@ function collides(items: readonly GridRect[], x: number, y: number, w: number, h
   }
   return false
 }
+
+/**
+ * Place at the end of the existing layout — sits to the right of the rightmost item in
+ * the last row if it fits, otherwise spills onto a new row. Used for the in-grid "+"
+ * add slot so it always trails real tiles instead of filling internal gaps.
+ */
+export function findEndSpot(
+  items: readonly GridRect[],
+  columns: number,
+  w: number,
+  h: number,
+): { x: number; y: number } {
+  if (items.length === 0) return { x: 0, y: 0 }
+  const fitW = Math.min(w, columns)
+  const maxRow = items.reduce((m, it) => Math.max(m, it.gridY + it.gridH), 0)
+  // Rightmost edge among items overlapping the bottom row band.
+  const bandTop = Math.max(0, maxRow - h)
+  const inBand = items.filter(it => it.gridY + it.gridH > bandTop && it.gridY < maxRow)
+  const rightEdge = inBand.reduce((m, it) => Math.max(m, it.gridX + it.gridW), 0)
+  if (rightEdge + fitW <= columns && !collides(items, rightEdge, bandTop, fitW, h)) {
+    return { x: rightEdge, y: bandTop }
+  }
+  return { x: 0, y: maxRow }
+}

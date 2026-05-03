@@ -19,6 +19,7 @@ public sealed class TileRepository(ISqliteConnectionFactory factory) : ITileRepo
     private const string SelectColumns = """
         id AS Id,
         board_id AS BoardId,
+        section_id AS SectionId,
         name AS Name,
         url AS Url,
         icon_url AS IconUrl,
@@ -67,11 +68,11 @@ public sealed class TileRepository(ISqliteConnectionFactory factory) : ITileRepo
         await conn.ExecuteAsync(
             """
             INSERT INTO tiles
-                (id, board_id, name, url, icon_url, icon_kind, description, color,
+                (id, board_id, section_id, name, url, icon_url, icon_kind, description, color,
                  grid_x, grid_y, grid_w, grid_h,
                  status_type, status_target, status_interval, status_timeout, status_expected)
             VALUES
-                (@Id, @BoardId, @Name, @Url, @IconUrl, @IconKind, @Description, @Color,
+                (@Id, @BoardId, @SectionId, @Name, @Url, @IconUrl, @IconKind, @Description, @Color,
                  @GridX, @GridY, @GridW, @GridH,
                  @StatusType, @StatusTarget, @StatusInterval, @StatusTimeout, @StatusExpected)
             """,
@@ -86,6 +87,7 @@ public sealed class TileRepository(ISqliteConnectionFactory factory) : ITileRepo
             UPDATE tiles
                SET name = @Name, url = @Url, icon_url = @IconUrl, icon_kind = @IconKind,
                    description = @Description, color = @Color,
+                   section_id = @SectionId,
                    grid_x = @GridX, grid_y = @GridY, grid_w = @GridW, grid_h = @GridH,
                    status_type = @StatusType, status_target = @StatusTarget,
                    status_interval = @StatusInterval, status_timeout = @StatusTimeout,
@@ -108,6 +110,7 @@ public sealed class TileRepository(ISqliteConnectionFactory factory) : ITileRepo
     {
         Id = t.Id.ToString(),
         BoardId = t.BoardId.ToString(),
+        SectionId = t.SectionId?.ToString(),
         t.Name,
         t.Url,
         t.IconUrl,

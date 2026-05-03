@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<IBoardRepository, BoardRepository>();
         services.AddScoped<ITileRepository, TileRepository>();
         services.AddScoped<IWidgetRepository, WidgetRepository>();
+        services.AddScoped<ISectionRepository, SectionRepository>();
         services.AddScoped<ILayoutRepository, LayoutRepository>();
 
         services.AddScoped<IBoardReader, BoardReader>();
@@ -29,6 +30,10 @@ public static class DependencyInjection
         services.AddScoped<IWidgetUpdater, WidgetUpdater>();
         services.AddScoped<IWidgetDeleter, WidgetDeleter>();
         services.AddScoped<ILayoutSaver, LayoutSaver>();
+
+        services.AddScoped<ISectionCreator, SectionCreator>();
+        services.AddScoped<ISectionUpdater, SectionUpdater>();
+        services.AddScoped<ISectionDeleter, SectionDeleter>();
 
         services.TryAddSingleton(TimeProvider.System);
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import Modal from '@/components/ui/Modal.vue'
 import Field from '@/components/ui/Field.vue'
 import { tilesApi } from '@/api/tiles'
-import type { CreateTileDto, TileDto, TileIconKind, TileStatusType, UpdateTileDto, WidgetDto } from '@/types/board'
+import { boardsApi } from '@/api/boards'
+import type { CreateTileDto, SectionDto, TileDto, TileIconKind, TileStatusType, UpdateTileDto, WidgetDto } from '@/types/board'
 import { findFreeSpot, type GridRect } from '@/utils/placement'
 
 const props = defineProps<{
@@ -12,6 +13,8 @@ const props = defineProps<{
   tile: TileDto | null
   existingTiles?: TileDto[]
   existingWidgets?: WidgetDto[]
+  sections?: SectionDto[]
+  defaultSectionId?: string | null
   gridColumns?: number
 }>()
 
@@ -27,6 +30,7 @@ interface FormState {
   iconKind: TileIconKind
   description: string
   color: string
+  sectionId: string
   statusType: TileStatusType
   statusTarget: string
   statusInterval: number
@@ -41,6 +45,7 @@ function blank(): FormState {
     iconKind: 'Url',
     description: '',
     color: '',
+    sectionId: '',
     // Default to HTTP GET against the tile URL — most users want the dot.
     // Advanced users can switch the type or set a separate target.
     statusType: 'HttpGet',
@@ -49,6 +54,30 @@ function blank(): FormState {
     statusTimeout: 5000,
   }
 }
+
+const sectionOptions = computed(() => {
+  const all = props.sections ?? []
+  // Sort: root first, then by parent → child to give a stable nested view.
+  const byParent = new Map<string | null, SectionDto[]>()
+  for (const s of all) {
+    const key = s.parentId
+    if (!byParent.has(key)) byParent.set(key, [])
+    byParent.get(key)!.push(s)
+  }
+  for (const arr of byParent.values()) arr.sort((a, b) => a.sortOrder - b.sortOrder)
+  const out: { id: string; label: string }[] = []
+  function walk(parentId: string | null, depth: number) {
+    const list = byParent.get(parentId) ?? []
+    for (const s of list) {
+      const indent = '  '.repeat(depth)
+      const name = s.name ?? (s.parentId === null ? 'Ungrouped' : 'Untitled')
+      out.push({ id: s.id, label: `${indent}${name}` })
+      walk(s.id, depth + 1)
+    }
+  }
+  walk(null, 0)
+  return out
+})
 
 const form = reactive<FormState>(blank())
 const submitting = reactive({ value: false, error: '' })
@@ -63,10 +92,15 @@ watch(() => [props.open, props.tile], ([open]) => {
     form.iconKind = props.tile.iconKind
     form.description = props.tile.description ?? ''
     form.color = props.tile.color ?? ''
+    form.sectionId = props.tile.sectionId ?? ''
     form.statusType = props.tile.statusType
     form.statusTarget = props.tile.statusTarget ?? ''
     form.statusInterval = props.tile.statusInterval
     form.statusTimeout = props.tile.statusTimeout
+  } else {
+    // Pre-select the section the user clicked "+" in, falling back to root.
+    const fallback = sectionOptions.value[0]?.id ?? ''
+    form.sectionId = props.defaultSectionId ?? fallback
   }
   submitting.error = ''
 }, { immediate: true })
@@ -93,17 +127,35 @@ async function save() {
         statusExpected: null,
       }
       await tilesApi.update(props.tile.id, dto)
+      // Section change goes through the layout endpoint (UpdateTileDto has no section field).
+      if (form.sectionId && form.sectionId !== (props.tile.sectionId ?? '')) {
+        await boardsApi.saveLayout(props.boardId, {
+          items: [{
+            id: props.tile.id,
+            kind: 'Tile',
+            sectionId: form.sectionId,
+            gridX: props.tile.gridX,
+            gridY: props.tile.gridY,
+            gridW: props.tile.gridW,
+            gridH: props.tile.gridH,
+          }],
+        })
+      }
     } else {
       const w = 3
       const h = 2
       const columns = props.gridColumns ?? 12
+      // Place within the chosen section, not against every tile on the board.
+      const sectionId = form.sectionId || null
+      const inSection = (item: { sectionId: string | null }) => (item.sectionId ?? null) === sectionId
       const occupants: GridRect[] = [
-        ...(props.existingTiles ?? []),
-        ...(props.existingWidgets ?? []),
+        ...(props.existingTiles ?? []).filter(inSection),
+        ...(props.existingWidgets ?? []).filter(inSection),
       ]
       const { x, y } = findFreeSpot(occupants, columns, w, h)
       const dto: CreateTileDto = {
         boardId: props.boardId,
+        sectionId: form.sectionId || null,
         name: form.name,
         url: form.url,
         iconUrl: form.iconUrl || null,
@@ -168,6 +220,11 @@ const inputClass = 'mt-1 block w-full rounded-md border border-gray-300 dark:bor
       </div>
       <Field label="Description (optional)">
         <input v-model="form.description" :class="inputClass" maxlength="200" />
+      </Field>
+      <Field v-if="sectionOptions.length > 0" label="Section">
+        <select v-model="form.sectionId" :class="inputClass">
+          <option v-for="s in sectionOptions" :key="s.id" :value="s.id">{{ s.label }}</option>
+        </select>
       </Field>
 
       <fieldset class="border border-gray-200 dark:border-gray-700 rounded-md p-3 space-y-3">

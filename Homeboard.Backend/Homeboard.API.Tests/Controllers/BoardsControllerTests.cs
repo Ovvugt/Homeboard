@@ -64,7 +64,7 @@ public sealed class BoardsControllerTests
     public async Task Create_tile_then_get_home_returns_it()
     {
         var dto = new CreateTileDto(
-            HomeBoardId, "TestTile", "https://example.com", null, TileIconKind.Url,
+            HomeBoardId, null, "TestTile", "https://example.com", null, TileIconKind.Url,
             null, null, 1, 2, 3, 2,
             TileStatusType.None, null, null, null, null);
         var resp = await _client.PostAsJsonAsync("/api/tiles", dto, TestJson.Options);
@@ -79,7 +79,7 @@ public sealed class BoardsControllerTests
     {
         // Seed a tile to move
         var create = new CreateTileDto(
-            HomeBoardId, "Movable", "https://example.com", null, TileIconKind.Url,
+            HomeBoardId, null, "Movable", "https://example.com", null, TileIconKind.Url,
             null, null, 0, 0, 2, 2,
             TileStatusType.None, null, null, null, null);
         var createResp = await _client.PostAsJsonAsync("/api/tiles", create, TestJson.Options);
@@ -88,7 +88,7 @@ public sealed class BoardsControllerTests
 
         var layout = new SaveLayoutDto(new List<LayoutItemDto>
         {
-            new(tile!.Id, LayoutItemKind.Tile, 5, 4, 2, 2),
+            new(tile!.Id, LayoutItemKind.Tile, null, 5, 4, 2, 2),
         });
         var saveResp = await _client.PostAsJsonAsync($"/api/boards/{HomeBoardId}/layout", layout, TestJson.Options);
         Assert.That(saveResp.StatusCode, Is.EqualTo(HttpStatusCode.NoContent));

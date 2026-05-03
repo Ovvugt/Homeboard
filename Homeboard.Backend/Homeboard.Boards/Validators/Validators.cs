@@ -60,6 +60,24 @@ public sealed class CreateWidgetDtoValidator : AbstractValidator<CreateWidgetDto
     }
 }
 
+public sealed class CreateSectionDtoValidator : AbstractValidator<CreateSectionDto>
+{
+    public CreateSectionDtoValidator()
+    {
+        RuleFor(x => x.BoardId).NotEmpty();
+        RuleFor(x => x.Name).MaximumLength(80);
+    }
+}
+
+public sealed class UpdateSectionDtoValidator : AbstractValidator<UpdateSectionDto>
+{
+    public UpdateSectionDtoValidator()
+    {
+        RuleFor(x => x.Name).MaximumLength(80);
+        RuleFor(x => x.SortOrder).GreaterThanOrEqualTo(0);
+    }
+}
+
 public sealed class SaveLayoutDtoValidator : AbstractValidator<SaveLayoutDto>
 {
     public SaveLayoutDtoValidator()

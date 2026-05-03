@@ -9,16 +9,21 @@ public interface IWidgetCreator
     Task<WidgetDto> CreateAsync(CreateWidgetDto dto, CancellationToken ct);
 }
 
-public sealed class WidgetCreator(IBoardRepository boards, IWidgetRepository widgets) : IWidgetCreator
+public sealed class WidgetCreator(
+    IBoardRepository boards,
+    ISectionRepository sections,
+    IWidgetRepository widgets) : IWidgetCreator
 {
     public async Task<WidgetDto> CreateAsync(CreateWidgetDto dto, CancellationToken ct)
     {
         var board = await boards.GetByIdAsync(dto.BoardId, ct)
             ?? throw new InvalidOperationException($"Board '{dto.BoardId}' not found.");
+        var sectionId = await TileCreator.ResolveSectionAsync(sections, board.Id, dto.SectionId, ct);
         var widget = new Widget
         {
             Id = Guid.NewGuid(),
             BoardId = board.Id,
+            SectionId = sectionId,
             Type = dto.Type,
             GridX = dto.GridX,
             GridY = dto.GridY,
@@ -27,7 +32,7 @@ public sealed class WidgetCreator(IBoardRepository boards, IWidgetRepository wid
             ConfigJson = string.IsNullOrWhiteSpace(dto.ConfigJson) ? "{}" : dto.ConfigJson
         };
         await widgets.InsertAsync(widget, ct);
-        return new WidgetDto(widget.Id, widget.BoardId, widget.Type, widget.GridX, widget.GridY, widget.GridW, widget.GridH, widget.ConfigJson);
+        return new WidgetDto(widget.Id, widget.BoardId, widget.SectionId, widget.Type, widget.GridX, widget.GridY, widget.GridW, widget.GridH, widget.ConfigJson);
     }
 }
 

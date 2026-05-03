@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import { PlusIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
+import { PlusIcon, FolderPlusIcon, Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { useBoardsStore } from '@/stores/boards'
 import { useEditModeStore } from '@/stores/editMode'
 import { useStatusStore } from '@/stores/status'
 import { tilesApi } from '@/api/tiles'
 import { widgetsApi } from '@/api/widgets'
-import BoardGrid from '@/components/board/BoardGrid.vue'
+import { sectionsApi } from '@/api/sections'
+import BoardSections from '@/components/board/BoardSections.vue'
 import TileEditor from '@/components/board/TileEditor.vue'
 import WidgetPicker from '@/components/board/WidgetPicker.vue'
 import WidgetEditor from '@/components/board/WidgetEditor.vue'
@@ -29,6 +30,7 @@ const editingTileId = ref<string | null>(null)
 const widgetPickerOpen = ref(false)
 const widgetEditorOpen = ref(false)
 const editingWidgetId = ref<string | null>(null)
+const defaultSectionId = ref<string | null>(null)
 
 const editingTile = computed(() => {
   if (!editingTileId.value || !boards.current) return null
@@ -40,9 +42,15 @@ const editingWidget = computed(() => {
   return boards.current.widgets.find(w => w.id === editingWidgetId.value) ?? null
 })
 
-function openCreateTile() {
+function openCreateTile(sectionId: string | null = null) {
   editingTileId.value = null
+  defaultSectionId.value = sectionId
   tileEditorOpen.value = true
+}
+
+function openWidgetPicker(sectionId: string | null = null) {
+  defaultSectionId.value = sectionId
+  widgetPickerOpen.value = true
 }
 
 function onEditTile(id: string) {
@@ -75,6 +83,23 @@ async function refresh() {
   await boards.loadBySlug(props.slug)
   if (boards.current) status.refresh(boards.current.id)
 }
+
+async function addSection() {
+  if (!boards.current) return
+  const name = prompt('Section name')
+  if (name === null) return
+  const root = boards.current.sections.find(s => s.parentId === null)
+  if (!root) return
+  try {
+    await sectionsApi.create({
+      boardId: boards.current.id,
+      parentId: root.id,
+      name: name.trim() || null,
+    })
+  } finally {
+    await refresh()
+  }
+}
 </script>
 
 <template>
@@ -89,7 +114,15 @@ async function refresh() {
           <button
             type="button"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-            @click="widgetPickerOpen = true"
+            @click="addSection"
+          >
+            <FolderPlusIcon class="w-4 h-4" />
+            Add section
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            @click="openWidgetPicker(null)"
           >
             <Squares2X2Icon class="w-4 h-4" />
             Add widget
@@ -97,7 +130,7 @@ async function refresh() {
           <button
             type="button"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm bg-primary-600 text-white hover:bg-primary-700"
-            @click="openCreateTile"
+            @click="openCreateTile(null)"
           >
             <PlusIcon class="w-4 h-4" />
             Add tile
@@ -105,7 +138,7 @@ async function refresh() {
         </div>
       </div>
       <div
-        v-if="boards.current.tiles.length === 0 && boards.current.widgets.length === 0"
+        v-if="boards.current.tiles.length === 0 && boards.current.widgets.length === 0 && !edit.editing"
         class="px-6 mt-12 text-center"
       >
         <div class="font-display text-2xl text-gray-700 dark:text-gray-200">Nothing here yet</div>
@@ -113,13 +146,13 @@ async function refresh() {
         <button
           type="button"
           class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm bg-primary-600 text-white hover:bg-primary-700"
-          @click="edit.editing = true; openCreateTile()"
+          @click="edit.editing = true; openCreateTile(null)"
         >
           <PlusIcon class="w-4 h-4" />
           Add a tile
         </button>
       </div>
-      <BoardGrid
+      <BoardSections
         v-else
         :board="boards.current"
         :editable="edit.editing"
@@ -127,6 +160,9 @@ async function refresh() {
         @edit-widget="onEditWidget"
         @delete-tile="onDeleteTile"
         @delete-widget="onDeleteWidget"
+        @add-tile="openCreateTile"
+        @add-widget="openWidgetPicker"
+        @changed="refresh"
       />
       <TileEditor
         :open="tileEditorOpen"
@@ -134,6 +170,8 @@ async function refresh() {
         :tile="editingTile"
         :existing-tiles="boards.current.tiles"
         :existing-widgets="boards.current.widgets"
+        :sections="boards.current.sections"
+        :default-section-id="defaultSectionId"
         :grid-columns="boards.current.gridColumns"
         @close="tileEditorOpen = false"
         @saved="refresh"
@@ -143,6 +181,7 @@ async function refresh() {
         :board-id="boards.current.id"
         :existing-tiles="boards.current.tiles"
         :existing-widgets="boards.current.widgets"
+        :default-section-id="defaultSectionId"
         :grid-columns="boards.current.gridColumns"
         @close="widgetPickerOpen = false"
         @saved="refresh"

@@ -6,6 +6,7 @@ public sealed record Widget
 {
     public Guid Id { get; init; }
     public Guid BoardId { get; init; }
+    public Guid? SectionId { get; init; }
     public WidgetType Type { get; init; }
     public int GridX { get; init; }
     public int GridY { get; init; }

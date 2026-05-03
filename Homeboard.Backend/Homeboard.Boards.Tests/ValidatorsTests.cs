@@ -13,7 +13,7 @@ public sealed class ValidatorsTests
     {
         var v = new CreateTileDtoValidator();
         var dto = new CreateTileDto(
-            Guid.NewGuid(), "", "", null, TileIconKind.Url, null, null,
+            Guid.NewGuid(), null, "", "", null, TileIconKind.Url, null, null,
             0, 0, 1, 1, TileStatusType.None, null, null, null, null);
         var result = v.Validate(dto);
         Assert.That(result.IsValid, Is.False);
@@ -25,7 +25,7 @@ public sealed class ValidatorsTests
     {
         var v = new CreateTileDtoValidator();
         var dto = new CreateTileDto(
-            Guid.NewGuid(), "x", "https://x", null, TileIconKind.Url, null, null,
+            Guid.NewGuid(), null, "x", "https://x", null, TileIconKind.Url, null, null,
             0, 0, 99, 1, TileStatusType.None, null, null, null, null);
         var result = v.Validate(dto);
         Assert.That(result.IsValid, Is.False);
@@ -36,7 +36,7 @@ public sealed class ValidatorsTests
     {
         var v = new SaveLayoutDtoValidator();
         var dto = new SaveLayoutDto([
-            new LayoutItemDto(Guid.NewGuid(), LayoutItemKind.Tile, -1, 0, 1, 1)
+            new LayoutItemDto(Guid.NewGuid(), LayoutItemKind.Tile, null, -1, 0, 1, 1)
         ]);
         var result = v.Validate(dto);
         Assert.That(result.IsValid, Is.False);

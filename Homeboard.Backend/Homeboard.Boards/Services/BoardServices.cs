@@ -13,7 +13,8 @@ public interface IBoardReader
 public sealed class BoardReader(
     IBoardRepository boards,
     ITileRepository tiles,
-    IWidgetRepository widgets) : IBoardReader
+    IWidgetRepository widgets,
+    ISectionRepository sections) : IBoardReader
 {
     public async Task<IReadOnlyList<BoardSummaryDto>> ListAsync(CancellationToken ct)
     {
@@ -25,10 +26,12 @@ public sealed class BoardReader(
     {
         var board = await boards.GetBySlugAsync(slug, ct);
         if (board is null) return null;
+        var sectionList = await sections.ListByBoardAsync(board.Id, ct);
         var tileList = await tiles.ListByBoardAsync(board.Id, ct);
         var widgetList = await widgets.ListByBoardAsync(board.Id, ct);
         return new BoardDetailDto(
             board.Id, board.Name, board.Slug, board.SortOrder, board.GridColumns,
+            sectionList.Select(BoardMapper.ToDto).ToList(),
             tileList.Select(BoardMapper.ToDto).ToList(),
             widgetList.Select(BoardMapper.ToDto).ToList());
     }
@@ -39,7 +42,10 @@ public interface IBoardCreator
     Task<BoardSummaryDto> CreateAsync(CreateBoardDto dto, CancellationToken ct);
 }
 
-public sealed class BoardCreator(IBoardRepository boards, TimeProvider time) : IBoardCreator
+public sealed class BoardCreator(
+    IBoardRepository boards,
+    ISectionRepository sections,
+    TimeProvider time) : IBoardCreator
 {
     public async Task<BoardSummaryDto> CreateAsync(CreateBoardDto dto, CancellationToken ct)
     {
@@ -62,6 +68,20 @@ public sealed class BoardCreator(IBoardRepository boards, TimeProvider time) : I
             UpdatedUtc = now
         };
         await boards.InsertAsync(board, ct);
+
+        // Every board gets an implicit unnamed root section.
+        await sections.InsertAsync(new Section
+        {
+            Id = Guid.NewGuid(),
+            BoardId = board.Id,
+            ParentId = null,
+            Name = null,
+            SortOrder = 0,
+            Collapsed = false,
+            CreatedUtc = now,
+            UpdatedUtc = now
+        }, ct);
+
         return new BoardSummaryDto(board.Id, board.Name, board.Slug, board.SortOrder, board.GridColumns);
     }
 }
@@ -107,10 +127,13 @@ public sealed class BoardDeleter(IBoardRepository boards) : IBoardDeleter
 internal static class BoardMapper
 {
     public static TileDto ToDto(Tile t) => new(
-        t.Id, t.BoardId, t.Name, t.Url, t.IconUrl, t.IconKind, t.Description, t.Color,
+        t.Id, t.BoardId, t.SectionId, t.Name, t.Url, t.IconUrl, t.IconKind, t.Description, t.Color,
         t.GridX, t.GridY, t.GridW, t.GridH,
         t.StatusType, t.StatusTarget, t.StatusInterval, t.StatusTimeout, t.StatusExpected);
 
     public static WidgetDto ToDto(Widget w) =>
-        new(w.Id, w.BoardId, w.Type, w.GridX, w.GridY, w.GridW, w.GridH, w.ConfigJson);
+        new(w.Id, w.BoardId, w.SectionId, w.Type, w.GridX, w.GridY, w.GridW, w.GridH, w.ConfigJson);
+
+    public static SectionDto ToDto(Section s) =>
+        new(s.Id, s.BoardId, s.ParentId, s.Name, s.SortOrder, s.Collapsed);
 }

@@ -9,6 +9,7 @@ const props = defineProps<{
   boardId: string
   existingTiles?: TileDto[]
   existingWidgets?: WidgetDto[]
+  defaultSectionId?: string | null
   gridColumns?: number
 }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -29,13 +30,16 @@ async function pick(type: WidgetType) {
   const w = 3
   const h = 2
   const columns = props.gridColumns ?? 12
+  const sectionId = props.defaultSectionId ?? null
+  const inSection = (item: { sectionId: string | null }) => (item.sectionId ?? null) === sectionId
   const occupants: GridRect[] = [
-    ...(props.existingTiles ?? []),
-    ...(props.existingWidgets ?? []),
+    ...(props.existingTiles ?? []).filter(inSection),
+    ...(props.existingWidgets ?? []).filter(inSection),
   ]
   const { x, y } = findFreeSpot(occupants, columns, w, h)
   await widgetsApi.create({
     boardId: props.boardId,
+    sectionId,
     type,
     gridX: x,
     gridY: y,

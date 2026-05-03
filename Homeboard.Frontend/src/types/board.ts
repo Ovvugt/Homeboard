@@ -12,7 +12,17 @@ export interface BoardSummary {
   gridColumns: number
 }
 
+export interface SectionDto {
+  id: string
+  boardId: string
+  parentId: string | null
+  name: string | null
+  sortOrder: number
+  collapsed: boolean
+}
+
 export interface BoardDetail extends BoardSummary {
+  sections: SectionDto[]
   tiles: TileDto[]
   widgets: WidgetDto[]
 }
@@ -20,6 +30,7 @@ export interface BoardDetail extends BoardSummary {
 export interface TileDto {
   id: string
   boardId: string
+  sectionId: string | null
   name: string
   url: string
   iconUrl: string | null
@@ -40,6 +51,7 @@ export interface TileDto {
 export interface WidgetDto {
   id: string
   boardId: string
+  sectionId: string | null
   type: WidgetType
   gridX: number
   gridY: number
@@ -56,6 +68,7 @@ export interface CreateBoardDto {
 
 export interface CreateTileDto {
   boardId: string
+  sectionId?: string | null
   name: string
   url: string
   iconUrl?: string | null
@@ -89,6 +102,7 @@ export interface UpdateTileDto {
 
 export interface CreateWidgetDto {
   boardId: string
+  sectionId?: string | null
   type: WidgetType
   gridX: number
   gridY: number
@@ -97,9 +111,23 @@ export interface CreateWidgetDto {
   configJson?: string
 }
 
+export interface CreateSectionDto {
+  boardId: string
+  parentId?: string | null
+  name?: string | null
+}
+
+export interface UpdateSectionDto {
+  name?: string | null
+  parentId?: string | null
+  sortOrder: number
+  collapsed: boolean
+}
+
 export interface LayoutItem {
   id: string
   kind: LayoutItemKind
+  sectionId?: string | null
   gridX: number
   gridY: number
   gridW: number

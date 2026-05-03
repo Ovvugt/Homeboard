@@ -19,12 +19,14 @@ public sealed class LayoutRepository(ISqliteConnectionFactory factory) : ILayout
 
         foreach (var item in items)
         {
+            // COALESCE keeps the current section if the client omits SectionId.
             var sql = item.Kind == LayoutItemKind.Tile
-                ? "UPDATE tiles SET grid_x = @GridX, grid_y = @GridY, grid_w = @GridW, grid_h = @GridH WHERE id = @Id"
-                : "UPDATE widgets SET grid_x = @GridX, grid_y = @GridY, grid_w = @GridW, grid_h = @GridH WHERE id = @Id";
+                ? "UPDATE tiles SET section_id = COALESCE(@SectionId, section_id), grid_x = @GridX, grid_y = @GridY, grid_w = @GridW, grid_h = @GridH WHERE id = @Id"
+                : "UPDATE widgets SET section_id = COALESCE(@SectionId, section_id), grid_x = @GridX, grid_y = @GridY, grid_w = @GridW, grid_h = @GridH WHERE id = @Id";
             await conn.ExecuteAsync(sql, new
             {
                 Id = item.Id.ToString(),
+                SectionId = item.SectionId?.ToString(),
                 item.GridX,
                 item.GridY,
                 item.GridW,

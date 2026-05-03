@@ -9,17 +9,23 @@ public interface ITileCreator
     Task<TileDto> CreateAsync(CreateTileDto dto, CancellationToken ct);
 }
 
-public sealed class TileCreator(IBoardRepository boards, ITileRepository tiles) : ITileCreator
+public sealed class TileCreator(
+    IBoardRepository boards,
+    ISectionRepository sections,
+    ITileRepository tiles) : ITileCreator
 {
     public async Task<TileDto> CreateAsync(CreateTileDto dto, CancellationToken ct)
     {
         var board = await boards.GetByIdAsync(dto.BoardId, ct)
             ?? throw new InvalidOperationException($"Board '{dto.BoardId}' not found.");
 
+        var sectionId = await ResolveSectionAsync(sections, board.Id, dto.SectionId, ct);
+
         var tile = new Tile
         {
             Id = Guid.NewGuid(),
             BoardId = board.Id,
+            SectionId = sectionId,
             Name = dto.Name.Trim(),
             Url = dto.Url.Trim(),
             IconUrl = string.IsNullOrWhiteSpace(dto.IconUrl) ? null : dto.IconUrl.Trim(),
@@ -38,9 +44,27 @@ public sealed class TileCreator(IBoardRepository boards, ITileRepository tiles) 
         };
         await tiles.InsertAsync(tile, ct);
         return new TileDto(
-            tile.Id, tile.BoardId, tile.Name, tile.Url, tile.IconUrl, tile.IconKind,
+            tile.Id, tile.BoardId, tile.SectionId, tile.Name, tile.Url, tile.IconUrl, tile.IconKind,
             tile.Description, tile.Color, tile.GridX, tile.GridY, tile.GridW, tile.GridH,
             tile.StatusType, tile.StatusTarget, tile.StatusInterval, tile.StatusTimeout, tile.StatusExpected);
+    }
+
+    internal static async Task<Guid?> ResolveSectionAsync(
+        ISectionRepository sections, Guid boardId, Guid? requested, CancellationToken ct)
+    {
+        if (requested.HasValue)
+        {
+            var section = await sections.GetByIdAsync(requested.Value, ct)
+                ?? throw new InvalidOperationException($"Section '{requested}' not found.");
+            if (section.BoardId != boardId)
+            {
+                throw new InvalidOperationException("Section does not belong to the target board.");
+            }
+            return section.Id;
+        }
+
+        var root = await sections.GetRootForBoardAsync(boardId, ct);
+        return root?.Id;
     }
 }
 

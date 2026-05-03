@@ -18,6 +18,7 @@ public sealed class WidgetRepository(ISqliteConnectionFactory factory) : IWidget
     private const string SelectColumns = """
         id AS Id,
         board_id AS BoardId,
+        section_id AS SectionId,
         type AS Type,
         grid_x AS GridX,
         grid_y AS GridY,
@@ -48,13 +49,14 @@ public sealed class WidgetRepository(ISqliteConnectionFactory factory) : IWidget
         await using var conn = factory.Create();
         await conn.ExecuteAsync(
             """
-            INSERT INTO widgets (id, board_id, type, grid_x, grid_y, grid_w, grid_h, config_json)
-            VALUES (@Id, @BoardId, @Type, @GridX, @GridY, @GridW, @GridH, @ConfigJson)
+            INSERT INTO widgets (id, board_id, section_id, type, grid_x, grid_y, grid_w, grid_h, config_json)
+            VALUES (@Id, @BoardId, @SectionId, @Type, @GridX, @GridY, @GridW, @GridH, @ConfigJson)
             """,
             new
             {
                 Id = widget.Id.ToString(),
                 BoardId = widget.BoardId.ToString(),
+                SectionId = widget.SectionId?.ToString(),
                 Type = widget.Type.ToString(),
                 widget.GridX,
                 widget.GridY,
@@ -70,12 +72,15 @@ public sealed class WidgetRepository(ISqliteConnectionFactory factory) : IWidget
         await conn.ExecuteAsync(
             """
             UPDATE widgets
-               SET grid_x = @GridX, grid_y = @GridY, grid_w = @GridW, grid_h = @GridH, config_json = @ConfigJson
+               SET section_id = @SectionId,
+                   grid_x = @GridX, grid_y = @GridY, grid_w = @GridW, grid_h = @GridH,
+                   config_json = @ConfigJson
              WHERE id = @Id
             """,
             new
             {
                 Id = widget.Id.ToString(),
+                SectionId = widget.SectionId?.ToString(),
                 widget.GridX,
                 widget.GridY,
                 widget.GridW,

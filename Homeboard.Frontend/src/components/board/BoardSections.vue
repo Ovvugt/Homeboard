@@ -79,9 +79,32 @@ function parseKey(i: string): { kind: 'Tile' | 'Widget'; id: string } {
 
 function onLayoutUpdated(sectionId: string, items: SectionItem[]) {
   if (!props.editable) return
+  // Optimistic local mutation so when edit mode exits, SectionView rebuilds
+  // its layout from up-to-date store state instead of snapping back to the
+  // last server-loaded values.
+  applyLayoutToStore(sectionId, items)
   const existing = saveTimers.get(sectionId)
   if (existing) clearTimeout(existing)
   saveTimers.set(sectionId, setTimeout(() => persistSection(sectionId, items), 500))
+}
+
+function applyLayoutToStore(sectionId: string, items: SectionItem[]) {
+  for (const it of items) {
+    const { kind, id } = parseKey(it.i)
+    if (kind === 'Tile') {
+      const t = props.board.tiles.find(x => x.id === id)
+      if (t) {
+        t.gridX = it.x; t.gridY = it.y; t.gridW = it.w; t.gridH = it.h
+        t.sectionId = sectionId
+      }
+    } else {
+      const w = props.board.widgets.find(x => x.id === id)
+      if (w) {
+        w.gridX = it.x; w.gridY = it.y; w.gridW = it.w; w.gridH = it.h
+        w.sectionId = sectionId
+      }
+    }
+  }
 }
 
 async function persistSection(sectionId: string, items: SectionItem[]) {

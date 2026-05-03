@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { weatherApi, type WeatherDto } from '@/api/weather'
 import type { WidgetDto } from '@/types/board'
+import { matchCity } from '@/utils/weatherCities'
 
 const props = defineProps<{ widget: WidgetDto }>()
 
@@ -51,11 +52,24 @@ const description = computed(() => {
   if (!weather.value || weather.value.weatherCode == null) return ''
   return codeMap[weather.value.weatherCode] ?? `Code ${weather.value.weatherCode}`
 })
+
+const heading = computed(() => {
+  if (config.value.label) return config.value.label
+  const city = matchCity(config.value.latitude, config.value.longitude)
+  return city ? city.name : 'Weather'
+})
+
+function formatCoord(value: number, axis: 'NS' | 'EW'): string {
+  const positive = axis === 'NS' ? 'N' : 'E'
+  const negative = axis === 'NS' ? 'S' : 'W'
+  const hemi = value >= 0 ? positive : negative
+  return `${Math.abs(value).toFixed(2)}°${hemi}`
+}
 </script>
 
 <template>
   <div class="h-full w-full rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-4 flex flex-col select-none">
-    <div class="text-xs uppercase tracking-wider text-gray-500">{{ config.label || 'Weather' }}</div>
+    <div class="text-xs uppercase tracking-wider text-gray-500">{{ heading }}</div>
     <div v-if="error" class="text-sm text-red-600 mt-2">{{ error }}</div>
     <template v-else-if="weather">
       <div class="font-display text-3xl md:text-4xl text-gray-900 dark:text-gray-100 tabular-nums mt-1">
@@ -65,6 +79,9 @@ const description = computed(() => {
       <div class="text-xs text-gray-500 mt-auto">
         <span v-if="weather.apparentTemperatureC != null">Feels {{ Math.round(weather.apparentTemperatureC) }}° · </span>
         <span v-if="weather.windSpeedKmh != null">{{ Math.round(weather.windSpeedKmh) }} km/h</span>
+      </div>
+      <div class="text-[10px] text-gray-400 mt-0.5 tabular-nums">
+        {{ formatCoord(weather.latitude, 'NS') }}, {{ formatCoord(weather.longitude, 'EW') }}
       </div>
     </template>
     <div v-else class="text-sm text-gray-500">Loading…</div>

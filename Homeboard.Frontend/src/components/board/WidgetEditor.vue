@@ -4,6 +4,7 @@ import Modal from '@/components/ui/Modal.vue'
 import Field from '@/components/ui/Field.vue'
 import { widgetsApi } from '@/api/widgets'
 import type { WidgetDto } from '@/types/board'
+import { WEATHER_CITIES, cityKey, matchCity } from '@/utils/weatherCities'
 
 const props = defineProps<{ open: boolean; widget: WidgetDto | null }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -114,6 +115,20 @@ const timezones = computed<TzOption[]>(() => {
 
 const browserTimezone = computed(() => {
   try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' } catch { return 'UTC' }
+})
+
+const weatherCityKey = computed<string>({
+  get() {
+    const match = matchCity(form.latitude, form.longitude)
+    return match ? cityKey(match) : ''
+  },
+  set(key) {
+    if (!key) return
+    const city = WEATHER_CITIES.find(c => cityKey(c) === key)
+    if (!city) return
+    form.latitude = city.lat
+    form.longitude = city.lon
+  },
 })
 
 watch(() => [props.open, props.widget?.id, props.widget?.configJson], ([open]) => {
@@ -232,6 +247,14 @@ const inputClass = 'mt-1 block w-full rounded-md border border-gray-300 dark:bor
       </template>
 
       <template v-else-if="widget.type === 'Weather'">
+        <Field label="City" hint="Pick a preset or enter custom coordinates below.">
+          <select v-model="weatherCityKey" :class="inputClass">
+            <option value="">Custom coordinates</option>
+            <option v-for="c in WEATHER_CITIES" :key="cityKey(c)" :value="cityKey(c)">
+              {{ c.name }} · {{ c.country }}
+            </option>
+          </select>
+        </Field>
         <div class="grid grid-cols-2 gap-3">
           <Field label="Latitude">
             <input v-model.number="form.latitude" type="number" step="0.0001" :class="inputClass" />
@@ -240,7 +263,7 @@ const inputClass = 'mt-1 block w-full rounded-md border border-gray-300 dark:bor
             <input v-model.number="form.longitude" type="number" step="0.0001" :class="inputClass" />
           </Field>
         </div>
-        <Field label="Label (optional)">
+        <Field label="Label (optional)" hint="Defaults to the selected city.">
           <input v-model="form.label" :class="inputClass" placeholder="Amsterdam" />
         </Field>
       </template>

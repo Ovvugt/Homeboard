@@ -1,6 +1,6 @@
 namespace Homeboard.Boards.Entities;
 
-public enum WidgetType { Clock, Weather }
+public enum WidgetType { Clock, Weather, Minecraft }
 
 public sealed record Widget
 {

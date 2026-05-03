@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddHttpClient("openmeteo");
         services.AddScoped<IWeatherFetcher, WeatherFetcher>();
+        services.AddScoped<IMinecraftStatusFetcher, MinecraftStatusFetcher>();
         return services;
     }
 }

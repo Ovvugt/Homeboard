@@ -14,9 +14,18 @@ const props = defineProps<{
 const emit = defineEmits<{ close: []; saved: [] }>()
 
 async function pick(type: WidgetType) {
-  const config = type === 'Clock'
-    ? '{"format":"24h"}'
-    : '{"latitude":52.37,"longitude":4.9,"label":"Amsterdam","units":"metric"}'
+  let config: string
+  switch (type) {
+    case 'Clock':
+      config = '{"format":"24h"}'
+      break
+    case 'Weather':
+      config = '{"latitude":52.37,"longitude":4.9,"label":"Amsterdam","units":"metric"}'
+      break
+    case 'Minecraft':
+      config = '{"host":"mc.example.com","port":25565,"refreshSeconds":60}'
+      break
+  }
   const w = 3
   const h = 2
   const columns = props.gridColumns ?? 12
@@ -57,6 +66,14 @@ async function pick(type: WidgetType) {
       >
         <div class="font-medium text-gray-900 dark:text-gray-100">Weather</div>
         <div class="text-sm text-gray-500">Current conditions via Open-Meteo.</div>
+      </button>
+      <button
+        type="button"
+        class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 text-left hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/20 transition"
+        @click="pick('Minecraft')"
+      >
+        <div class="font-medium text-gray-900 dark:text-gray-100">Minecraft</div>
+        <div class="text-sm text-gray-500">Live server status & player count via SLP.</div>
       </button>
     </div>
     <template #footer="{ close }">

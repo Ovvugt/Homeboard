@@ -1,6 +1,6 @@
 export type TileIconKind = 'Url' | 'Initials' | 'Builtin'
 export type TileStatusType = 'None' | 'HttpHead' | 'HttpGet' | 'Tcp'
-export type WidgetType = 'Clock' | 'Weather'
+export type WidgetType = 'Clock' | 'Weather' | 'Minecraft'
 export type LayoutItemKind = 'Tile' | 'Widget'
 export type StatusValue = 'Up' | 'Down' | 'Unknown'
 

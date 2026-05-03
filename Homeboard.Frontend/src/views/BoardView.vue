@@ -9,6 +9,7 @@ import { widgetsApi } from '@/api/widgets'
 import BoardGrid from '@/components/board/BoardGrid.vue'
 import TileEditor from '@/components/board/TileEditor.vue'
 import WidgetPicker from '@/components/board/WidgetPicker.vue'
+import WidgetEditor from '@/components/board/WidgetEditor.vue'
 
 const props = defineProps<{ slug: string }>()
 const boards = useBoardsStore()
@@ -26,10 +27,17 @@ onBeforeUnmount(() => status.stop())
 const tileEditorOpen = ref(false)
 const editingTileId = ref<string | null>(null)
 const widgetPickerOpen = ref(false)
+const widgetEditorOpen = ref(false)
+const editingWidgetId = ref<string | null>(null)
 
 const editingTile = computed(() => {
   if (!editingTileId.value || !boards.current) return null
   return boards.current.tiles.find(t => t.id === editingTileId.value) ?? null
+})
+
+const editingWidget = computed(() => {
+  if (!editingWidgetId.value || !boards.current) return null
+  return boards.current.widgets.find(w => w.id === editingWidgetId.value) ?? null
 })
 
 function openCreateTile() {
@@ -42,8 +50,9 @@ function onEditTile(id: string) {
   tileEditorOpen.value = true
 }
 
-function onEditWidget(_id: string) {
-  // Widgets currently have no edit modal — only delete via trash drop.
+function onEditWidget(id: string) {
+  editingWidgetId.value = id
+  widgetEditorOpen.value = true
 }
 
 async function onDeleteTile(id: string) {
@@ -136,6 +145,12 @@ async function refresh() {
         :existing-widgets="boards.current.widgets"
         :grid-columns="boards.current.gridColumns"
         @close="widgetPickerOpen = false"
+        @saved="refresh"
+      />
+      <WidgetEditor
+        :open="widgetEditorOpen"
+        :widget="editingWidget"
+        @close="widgetEditorOpen = false"
         @saved="refresh"
       />
     </template>

@@ -74,13 +74,20 @@ const heading = computed(() => {
       />
       <div class="min-w-0 flex-1">
         <div class="text-xs uppercase tracking-wider text-gray-500 truncate">{{ heading }}</div>
-        <div class="flex items-center gap-1.5 mt-0.5">
+        <div class="flex items-center gap-1.5 mt-0.5 min-w-0">
           <span
             class="inline-block h-2 w-2 rounded-full flex-shrink-0"
             :class="status?.online ? 'bg-emerald-500' : 'bg-red-500'"
           />
-          <span class="text-xs text-gray-600 dark:text-gray-300">
+          <span class="text-xs text-gray-600 dark:text-gray-300 shrink-0">
             {{ status?.online ? 'Online' : (error ? 'Error' : 'Offline') }}
+          </span>
+          <span
+            v-if="status?.online"
+            class="text-[10px] text-gray-400 truncate"
+          >
+            <span v-if="status.versionName">· {{ status.versionName }}</span>
+            <span v-if="status.latencyMs != null"> · {{ status.latencyMs }} ms</span>
           </span>
         </div>
       </div>
@@ -89,31 +96,36 @@ const heading = computed(() => {
     <div v-if="error" class="text-xs text-red-600 mt-2 break-words">{{ error }}</div>
 
     <template v-else-if="status?.online">
-      <div class="font-display text-3xl md:text-4xl text-gray-900 dark:text-gray-100 tabular-nums mt-2 leading-none">
-        {{ status.playersOnline ?? '—' }}<span
-          v-if="status.playersMax != null"
-          class="text-lg text-gray-500"
-        >/{{ status.playersMax }}</span>
-      </div>
-      <div class="text-xs text-gray-500 mt-0.5">
-        player<span v-if="status.playersOnline !== 1">s</span> online
-      </div>
-      <div
-        v-if="status.playerSample && status.playerSample.length"
-        class="text-xs text-gray-600 dark:text-gray-300 mt-1 truncate"
-        :title="status.playerSample.join(', ')"
-      >
-        {{ status.playerSample.join(', ') }}
-      </div>
-      <div
-        v-if="showMotd && status.motd"
-        class="text-xs text-gray-500 mt-1 line-clamp-2 whitespace-pre-line"
-      >
-        {{ status.motd }}
-      </div>
-      <div class="text-[10px] text-gray-400 mt-auto pt-1 flex gap-2">
-        <span v-if="status.versionName">{{ status.versionName }}</span>
-        <span v-if="status.latencyMs != null">· {{ status.latencyMs }} ms</span>
+      <div class="flex-1 min-h-0 mt-2 flex gap-3">
+        <div class="flex-1 min-w-0 flex flex-col">
+          <div class="font-display text-3xl md:text-4xl text-gray-900 dark:text-gray-100 tabular-nums leading-none">
+            {{ status.playersOnline ?? '—' }}<span
+              v-if="status.playersMax != null"
+              class="text-lg text-gray-500"
+            >/{{ status.playersMax }}</span>
+          </div>
+          <div class="text-xs text-gray-500 mt-0.5">
+            player<span v-if="status.playersOnline !== 1">s</span> online
+          </div>
+          <div
+            v-if="showMotd && status.motd"
+            class="text-xs text-gray-500 mt-2 whitespace-pre-line min-w-0 flex-1 min-h-0 overflow-y-auto pr-0.5 minecraft-players"
+          >
+            {{ status.motd }}
+          </div>
+        </div>
+
+        <div
+          v-if="status.playerSample && status.playerSample.length"
+          class="w-24 sm:w-28 shrink-0 flex flex-col min-h-0 border-l border-gray-200 dark:border-gray-700 pl-2"
+        >
+          <div class="text-[10px] uppercase tracking-wider text-gray-500 mb-1 shrink-0">Players</div>
+          <ul class="text-xs text-gray-700 dark:text-gray-300 space-y-0.5 overflow-y-auto pr-0.5 minecraft-players">
+            <li v-for="name in status.playerSample" :key="name" class="truncate" :title="name">
+              {{ name }}
+            </li>
+          </ul>
+        </div>
       </div>
     </template>
 
@@ -124,3 +136,15 @@ const heading = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.minecraft-players {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.4) transparent;
+}
+.minecraft-players::-webkit-scrollbar { width: 4px; }
+.minecraft-players::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.4);
+  border-radius: 2px;
+}
+</style>
